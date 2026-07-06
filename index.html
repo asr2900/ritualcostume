@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RitualCostume — Avatar Lab</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="ritual-bg-noise"></div>
+
+  <header class="site-header">
+    <span class="mark">☉</span>
+    <span class="wordmark">RITUAL<span class="wordmark-thin">COSTUME</span></span>
+    <span class="tagline">avatar lab — bab 01</span>
+  </header>
+
+  <main class="lab">
+
+    <!-- KIRI: preview avatar -->
+    <section class="stage" aria-label="Preview avatar">
+      <div class="stage-frame">
+        <div class="stage-ring" aria-hidden="true"></div>
+        <canvas id="avatarCanvas" width="600" height="600"></canvas>
+      </div>
+
+      <div class="stage-actions">
+        <button id="downloadBtn" class="btn btn-primary">Unduh JPG</button>
+        <button id="shareBtn" class="btn btn-ghost">Bagikan ke X</button>
+      </div>
+
+      <button id="mintBtn" class="btn btn-mint" disabled>
+        Mint sebagai bukti kehadiran (segera hadir)
+      </button>
+    </section>
+
+    <!-- KANAN: panel kontrol kostum -->
+    <section class="controls" aria-label="Pilih kostum">
+      <div id="layerPanels"></div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>langkah demi langkah, susun karaktermu sendiri.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
