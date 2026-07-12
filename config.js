@@ -53,7 +53,7 @@ const LAYERS = [
       { id: "clothes-01", name: "Ember Robe", src: "assets/clothes/clothes-01.png" },
       { id: "clothes-02", name: "Verdigris Cloak", src: "assets/clothes/clothes-02.png" },
       { id: "clothes-03", name: "Obsidian Tunic", src: "assets/clothes/clothes-03.png" },
-      { id: "clothes-03", name: "Obsidian huking", src: "assets/clothes/clothes-04.png" },
+      { id: "clothes-04", name: "Obsidian huking", src: "assets/clothes/clothes-04.png" },
     ],
   },
   {
