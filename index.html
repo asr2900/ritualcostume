@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RitualCostume — Avatar Lab</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="ritual-bg-noise"></div>
+
+  <header class="site-header">
+    <span class="logo-frame">
+      <!-- Ganti file assets/logo/logo.png dengan logo aslimu, nama file
+           harus tetap "logo.png" supaya tidak perlu edit HTML ini. -->
+      <img src="assets/logo/logo.png" alt="RitualCostume logo" class="logo-img" />
+    </span>
+    <span class="wordmark">RITUAL<span class="wordmark-thin">COSTUME</span></span>
+    <span class="tagline">avatar lab</span>
+  </header>
+
+  <main class="lab">
+
+    <!-- KIRI: preview avatar -->
+    <section class="stage" aria-label="Avatar preview">
+      <div class="stage-frame">
+        <div class="stage-ring" aria-hidden="true"></div>
+
+        <!-- 4 kucing hitam berlari mengelilingi avatar -->
+        <div class="cat-runners" aria-hidden="true">
+          <div class="cat-track cat-track-1"><span class="cat-pos cat-pos-1"><svg class="cat-svg" viewBox="0 0 64 40"><use href="#cat-run"/></svg></span></div>
+          <div class="cat-track cat-track-2"><span class="cat-pos cat-pos-2"><svg class="cat-svg" viewBox="0 0 64 40"><use href="#cat-run"/></svg></span></div>
+          <div class="cat-track cat-track-3"><span class="cat-pos cat-pos-3"><svg class="cat-svg" viewBox="0 0 64 40"><use href="#cat-run"/></svg></span></div>
+          <div class="cat-track cat-track-4"><span class="cat-pos cat-pos-4"><svg class="cat-svg" viewBox="0 0 64 40"><use href="#cat-run"/></svg></span></div>
+        </div>
+
+        <canvas id="avatarCanvas" width="600" height="600"></canvas>
+      </div>
+
+      <div class="stage-actions">
+        <button id="downloadBtn" class="btn btn-primary">Download JPG</button>
+        <button id="shareBtn" class="btn btn-ghost">Share to X</button>
+        <button id="revealIdentityBtn" class="btn btn-ghost" disabled>Reveal My Ritual Identity</button>
+      </div>
+
+      <div id="identityPanel" class="identity-panel" hidden>
+
+        <div class="identity-view" id="identityForm">
+          <p class="identity-eyebrow">✦ Ritual Identity</p>
+
+          <label class="identity-label" for="identityQ1">In one sentence, why did you first feel drawn to join the Ritual community?</label>
+          <textarea id="identityQ1" class="identity-textarea" maxlength="150" rows="2" placeholder="Type your answer..."></textarea>
+
+          <label class="identity-label" for="identityQ2">Of everything Ritual is building, what do you believe will change something most?</label>
+          <textarea id="identityQ2" class="identity-textarea" maxlength="150" rows="2" placeholder="Type your answer..."></textarea>
+
+          <p class="identity-note" id="identityNote">Your answers shape a one-of-a-kind identity. There are no wrong answers.</p>
+
+          <button id="generateIdentityBtn" class="btn btn-primary identity-submit">Generate My Identity</button>
+        </div>
+
+        <div class="identity-view identity-loading" id="identityLoading" hidden>
+          <span class="identity-pulse" aria-hidden="true"></span>
+          <p>Reading your identity...</p>
+        </div>
+
+        <div class="identity-view identity-error-view" id="identityErrorView" hidden>
+          <p>The ritual is uncertain right now. Try again in a moment.</p>
+          <button id="identityErrorRetryBtn" class="btn btn-ghost">Try Again</button>
+        </div>
+
+        <div class="identity-view identity-result" id="identityResult" hidden>
+          <p class="identity-eyebrow">✦ Your Ritual Identity</p>
+          <p class="identity-label-small">Ritual Name</p>
+          <h3 id="identityNameOutput" class="identity-name"></h3>
+          <p id="identityDescOutput" class="identity-desc"></p>
+          <div class="identity-result-actions">
+            <button id="identityTryAgainBtn" class="btn btn-ghost">Try Again</button>
+            <button id="identityCopyBtn" class="btn btn-primary">Copy to Share</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button id="mintBtn" class="btn btn-mint" disabled>
+        Mint as proof of presence (coming soon)
+      </button>
+    </section>
+
+    <!-- KANAN: panel kontrol kostum -->
+    <section class="controls" aria-label="Choose your costume">
+      <div class="tabs" id="categoryTabs"></div>
+
+      <div class="swatch-scroll-wrap">
+        <button class="scroll-btn scroll-left" id="scrollLeftBtn" aria-label="Scroll left">‹</button>
+        <div class="swatch-strip" id="swatchStrip"></div>
+        <button class="scroll-btn scroll-right" id="scrollRightBtn" aria-label="Scroll right">›</button>
+      </div>
+
+      <p id="loadStatus" class="load-status" aria-live="polite"></p>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>step by step, build your own character.</p>
+  </footer>
+
+  <!-- Definisi bentuk kucing lari, dipakai ulang 4x lewat <use> di atas -->
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="cat-run" viewBox="0 0 64 40">
+      <g fill="#0a0a0a">
+        <ellipse cx="30" cy="22" rx="18" ry="9"/>
+        <circle cx="50" cy="14" r="8"/>
+        <polygon points="44,9 47,1 50,9"/>
+        <polygon points="52,9 55,1 58,9"/>
+        <path d="M13 20 C4 16, 2 8, 8 4 C 6 12, 10 17, 15 19 Z"/>
+        <rect x="14" y="27" width="5" height="10" rx="2" class="leg leg-a"/>
+        <rect x="24" y="27" width="5" height="10" rx="2" class="leg leg-b"/>
+        <rect x="34" y="27" width="5" height="10" rx="2" class="leg leg-a"/>
+        <rect x="42" y="27" width="5" height="10" rx="2" class="leg leg-b"/>
+      </g>
+    </symbol>
+  </svg>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
