@@ -19,6 +19,10 @@
  * -----------------------------------------------------------
  */
 
+// "gemini-flash-latest" adalah alias yang selalu diarahkan Google ke model
+// Flash stabil terbarunya (saat ini Gemini 3.5 Flash). Pakai alias ini
+// (bukan nama versi spesifik seperti "gemini-2.5-flash") supaya kode ini
+// tidak rusak lagi kalau Google pensiunkan versi model tertentu di masa depan.
 const GEMINI_MODEL = "gemini-flash-latest";
 
 export default async function handler(req, res) {
@@ -96,7 +100,7 @@ Respond ONLY in this JSON format, no preamble, no explanation:
           },
         ],
         generationConfig: {
-          maxOutputTokens: 1000,
+          maxOutputTokens: 3000,
           responseMimeType: "application/json",
         },
       }),
@@ -141,4 +145,3 @@ Respond ONLY in this JSON format, no preamble, no explanation:
     res.status(500).json({ error: "Generation failed" });
   }
 }
-
