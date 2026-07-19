@@ -253,6 +253,15 @@ html, body {
 /* -----------------------------------------------------------
    RITUAL IDENTITY PANEL
 ----------------------------------------------------------- */
+
+/* PENTING: tanpa baris ini, elemen dengan atribut [hidden] tetap
+   tampil kalau class-nya sendiri mengatur "display" (misal
+   .identity-loading { display: flex }). Author CSS mengalahkan
+   default browser untuk [hidden], jadi harus dipaksa di sini. */
+[hidden] {
+  display: none !important;
+}
+
 .identity-panel {
   width: 100%;
   max-width: 420px;
