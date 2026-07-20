@@ -398,8 +398,7 @@ connectWalletBtn.addEventListener("click", async () => {
       const signer = provider.getSigner();
       const ritualContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-      // 3. Menyiapkan URI Metadata (Menggunakan base64 gambar sementara atau link metadata)
-      // Untuk pengujian awal langsung ke blockchain, kita masukkan data gambar card ke tokenURI
+      // 3. Menyiapkan URI Metadata
       const tokenURI = finalCardImageURL;
 
       console.log("Mengirim transaksi minting ke blockchain...");
@@ -416,7 +415,9 @@ connectWalletBtn.addEventListener("click", async () => {
       
     } catch (error) {
       console.error("Gagal melakukan proses minting:", error);
-      alert("Proses minting dibatalkan atau gagal. Periksa konsol untuk detailnya.");
+      // Menampilkan pesan error asli secara mendetail ke layar
+      alert("ERROR DETAIL: " + (error.message || JSON.stringify(error)));
+      
       connectWalletBtn.textContent = "Connect Wallet";
       connectWalletBtn.disabled = false;
     }
