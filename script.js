@@ -1,8 +1,7 @@
 /**
  * script.js
  * -----------------------------------------------------------
- * Logika utama. Kamu TIDAK perlu mengedit file ini untuk
- * menambah pilihan kostum baru — cukup edit config.js.
+ * Logika utama aplikasi The Siggy Soul Forge.
  * -----------------------------------------------------------
  */
 
@@ -11,14 +10,14 @@ const ctx = canvas.getContext("2d");
 
 // state: menyimpan pilihan yang sedang aktif untuk tiap kategori
 const state = {};
-LAYERS.forEach((layer) => {
-  state[layer.id] = layer.options[0].id; // default: pilihan pertama
-});
+if (typeof LAYERS !== "undefined") {
+  LAYERS.forEach((layer) => {
+    state[layer.id] = layer.options[0].id;
+  });
+}
 
-let activeTab = TAB_ORDER[0];
+let activeTab = typeof TAB_ORDER !== "undefined" ? TAB_ORDER[0] : "";
 
-// menandai apakah user sudah pernah mengubah pilihan dari default,
-// dipakai untuk mengaktifkan tombol "Reveal My Ritual Identity"
 let userHasCustomized = false;
 function markCustomized() {
   if (userHasCustomized) return;
@@ -27,7 +26,6 @@ function markCustomized() {
   if (btn) btn.disabled = false;
 }
 
-// cache gambar supaya tidak load ulang setiap render
 const imageCache = {};
 function loadImage(src) {
   if (!src) return Promise.resolve(null);
@@ -44,17 +42,16 @@ function loadImage(src) {
 }
 
 function findLayer(layerId) {
-  return LAYERS.find((l) => l.id === layerId);
+  return typeof LAYERS !== "undefined" ? LAYERS.find((l) => l.id === layerId) : null;
 }
 function findOption(layerId, optionId) {
-  return findLayer(layerId).options.find((o) => o.id === optionId);
+  const layer = findLayer(layerId);
+  return layer ? layer.options.find((o) => o.id === optionId) : null;
 }
 
 async function render() {
-  // Penjaga anti-race-condition: kalau ada render() lain yang lebih baru
-  // mulai duluan (misal user klik-klik cepat), render lama ini akan
-  // menghentikan dirinya sendiri supaya tidak menimpa hasil yang benar.
   const myRenderId = ++renderCounter;
+  if (!canvas || !ctx) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const failedSrcs = [];
@@ -65,7 +62,7 @@ async function render() {
     if (!option || !option.src) continue;
     try {
       const img = await loadImage(option.src);
-      if (myRenderId !== renderCounter) return; // ada render lebih baru, batalkan
+      if (myRenderId !== renderCounter) return;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } catch (e) {
       failedSrcs.push(option.src);
@@ -77,7 +74,6 @@ async function render() {
 }
 let renderCounter = 0;
 
-// ---------- Tampilkan pesan error langsung di halaman (bukan cuma console) ----------
 function showLoadStatus(failedSrcs) {
   const statusEl = document.getElementById("loadStatus");
   if (!statusEl) return;
@@ -96,10 +92,12 @@ function showLoadStatus(failedSrcs) {
 // ---------- TABS ----------
 function buildTabs() {
   const tabsEl = document.getElementById("categoryTabs");
+  if (!tabsEl || typeof TAB_ORDER === "undefined") return;
   tabsEl.innerHTML = "";
 
   TAB_ORDER.forEach((layerId) => {
     const layer = findLayer(layerId);
+    if (!layer) return;
     const btn = document.createElement("button");
     btn.className = "tab-btn" + (layerId === activeTab ? " active" : "");
     btn.textContent = layer.label;
@@ -113,12 +111,14 @@ function buildTabs() {
   });
 }
 
-// ---------- SWATCH STRIP (horizontal, bisa ratusan item) ----------
+// ---------- SWATCH STRIP ----------
 function buildSwatchStrip() {
   const strip = document.getElementById("swatchStrip");
+  if (!strip) return;
   strip.innerHTML = "";
 
   const layer = findLayer(activeTab);
+  if (!layer) return;
 
   layer.options.forEach((option) => {
     const col = document.createElement("div");
@@ -161,16 +161,16 @@ function buildSwatchStrip() {
   strip.scrollLeft = 0;
 }
 
-// tombol panah kiri/kanan untuk scroll strip (berguna kalau koleksi ratusan)
-document.getElementById("scrollLeftBtn").addEventListener("click", () => {
-  document.getElementById("swatchStrip").scrollBy({ left: -260, behavior: "smooth" });
+document.getElementById("scrollLeftBtn")?.addEventListener("click", () => {
+  document.getElementById("swatchStrip")?.scrollBy({ left: -260, behavior: "smooth" });
 });
-document.getElementById("scrollRightBtn").addEventListener("click", () => {
-  document.getElementById("swatchStrip").scrollBy({ left: 260, behavior: "smooth" });
+document.getElementById("scrollRightBtn")?.addEventListener("click", () => {
+  document.getElementById("swatchStrip")?.scrollBy({ left: 260, behavior: "smooth" });
 });
 
 // ---------- DOWNLOAD JPG ----------
-document.getElementById("downloadBtn").addEventListener("click", () => {
+document.getElementById("downloadBtn")?.addEventListener("click", () => {
+  if (!canvas) return;
   const link = document.createElement("a");
   link.download = "ritualcostume-avatar.jpg";
   link.href = canvas.toDataURL("image/jpeg", 0.95);
@@ -192,41 +192,43 @@ const identityDescOutput = document.getElementById("identityDescOutput");
 const generateIdentityBtn = document.getElementById("generateIdentityBtn");
 const identityCopyBtn = document.getElementById("identityCopyBtn");
 
-// membaca nama pilihan yang sedang aktif dari LAYERS config
 function getActiveLayerNames() {
   const names = {};
+  if (typeof LAYER_ORDER === "undefined") return names;
   LAYER_ORDER.forEach((layerId) => {
     const layer = findLayer(layerId);
     const option = findOption(layerId, state[layerId]);
-    names[layer.label] = option ? option.name : "None";
+    if (layer) {
+      names[layer.label] = option ? option.name : "None";
+    }
   });
   return names;
 }
 
 function setIdentityPanelView(view) {
-  identityFormView.hidden = view !== "form";
-  identityLoadingView.hidden = view !== "loading";
-  identityErrorView.hidden = view !== "error";
-  identityResultView.hidden = view !== "result";
+  if (identityFormView) identityFormView.hidden = view !== "form";
+  if (identityLoadingView) identityLoadingView.hidden = view !== "loading";
+  if (identityErrorView) identityErrorView.hidden = view !== "error";
+  if (identityResultView) identityResultView.hidden = view !== "result";
 }
 
 function buildIdentityPanel() {
-  identityPanel.hidden = false;
+  if (identityPanel) identityPanel.hidden = false;
   setIdentityPanelView("form");
-  identityQ1.focus();
+  if (identityQ1) identityQ1.focus();
 }
 
 function clearFieldError(el) {
-  el.classList.remove("field-error");
+  if (el) el.classList.remove("field-error");
 }
 
 function validateIdentityAnswers() {
   let valid = true;
   [identityQ1, identityQ2].forEach((el) => {
-    if (!el.value.trim()) {
+    if (el && !el.value.trim()) {
       el.classList.add("field-error");
       valid = false;
-    } else {
+    } else if (el) {
       clearFieldError(el);
     }
   });
@@ -234,7 +236,7 @@ function validateIdentityAnswers() {
 }
 
 [identityQ1, identityQ2].forEach((el) => {
-  el.addEventListener("input", () => clearFieldError(el));
+  if (el) el.addEventListener("input", () => clearFieldError(el));
 });
 
 async function callAnthropicAPI(layerNames, answer1, answer2) {
@@ -264,23 +266,25 @@ async function callAnthropicAPI(layerNames, answer1, answer2) {
 }
 
 function showIdentityResult(ritualName, ritualIdentity) {
-  identityNameOutput.textContent = ritualName;
-  identityDescOutput.textContent = ritualIdentity;
+  if (identityNameOutput) identityNameOutput.textContent = ritualName;
+  if (identityDescOutput) identityDescOutput.textContent = ritualIdentity;
   
-  mintBtn.hidden = false;
-  connectWalletBtn.hidden = true;
+  const mintBtn = document.getElementById("mintBtn");
+  const connectWalletBtn = document.getElementById("connectWalletBtn");
+  if (mintBtn) mintBtn.hidden = false;
+  if (connectWalletBtn) connectWalletBtn.hidden = true;
   
   setIdentityPanelView("result");
 }
 
-document.getElementById("revealIdentityBtn").addEventListener("click", buildIdentityPanel);
+document.getElementById("revealIdentityBtn")?.addEventListener("click", buildIdentityPanel);
 
-generateIdentityBtn.addEventListener("click", async () => {
+generateIdentityBtn?.addEventListener("click", async () => {
   if (!validateIdentityAnswers()) return;
 
   const layerNames = getActiveLayerNames();
-  const answer1 = identityQ1.value.trim();
-  const answer2 = identityQ2.value.trim();
+  const answer1 = identityQ1 ? identityQ1.value.trim() : "";
+  const answer2 = identityQ2 ? identityQ2.value.trim() : "";
 
   setIdentityPanelView("loading");
 
@@ -294,13 +298,14 @@ generateIdentityBtn.addEventListener("click", async () => {
 
 function backToIdentityForm() {
   setIdentityPanelView("form");
-  identityNote.textContent = "Tell us more or edit your answers to get a different result.";
+  if (identityNote) identityNote.textContent = "Tell us more or edit your answers to get a different result.";
 }
 
-document.getElementById("identityErrorRetryBtn").addEventListener("click", backToIdentityForm);
-document.getElementById("identityTryAgainBtn").addEventListener("click", backToIdentityForm);
+document.getElementById("identityErrorRetryBtn")?.addEventListener("click", backToIdentityForm);
+document.getElementById("identityTryAgainBtn")?.addEventListener("click", backToIdentityForm);
 
-identityCopyBtn.addEventListener("click", async () => {
+identityCopyBtn?.addEventListener("click", async () => {
+  if (!identityNameOutput || !identityDescOutput) return;
   const shareText = `${identityNameOutput.textContent}\n\n${identityDescOutput.textContent}`;
   try {
     await navigator.clipboard.writeText(shareText);
@@ -314,20 +319,17 @@ identityCopyBtn.addEventListener("click", async () => {
   }
 });
 
-// ---------- RITUAL CARD & WEB3 (SMART CONTRACT INTEGRATION) ----------
+// ---------- RITUAL CARD & WEB3 ----------
 const mintBtn = document.getElementById("mintBtn");
 const connectWalletBtn = document.getElementById("connectWalletBtn");
 let finalCardImageURL = "";
 
-// Gunakan string string biasa dengan format checksum asli yang benar dari Remix
-const CONTRACT_ADDRESS = "0xBb75b9220038bF1B12093551532cb1A89b93f99";
-
-// ABI fungsi mintCard pada kontrak Solidity kita
 const CONTRACT_ABI = [
   "function mintCard(address recipient, string memory tokenURI) public returns (uint256)"
 ];
 
 function generateRitualCard() {
+  if (!identityNameOutput || !identityDescOutput || !canvas) return;
   const ritualName = identityNameOutput.textContent;
   const ritualIdentity = identityDescOutput.textContent;
 
@@ -336,20 +338,16 @@ function generateRitualCard() {
   cardCanvas.height = 1200;
   const cardCtx = cardCanvas.getContext("2d");
 
-  // Background Kartu
   cardCtx.fillStyle = "#1a1a1a";
   cardCtx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
 
-  // Mengambil gambar dari canvas avatar (di tengah atas)
   cardCtx.drawImage(canvas, 100, 100, 600, 600);
 
-  // Teks: Ritual Name
   cardCtx.fillStyle = "#ffffff";
   cardCtx.font = "bold 48px sans-serif";
   cardCtx.textAlign = "center";
   cardCtx.fillText(ritualName.toUpperCase(), cardCanvas.width / 2, 800);
 
-  // Teks: Lore / Identitas (dengan Word Wrap manual)
   cardCtx.font = "24px sans-serif";
   cardCtx.fillStyle = "#cccccc";
   const maxWidth = 700;
@@ -372,52 +370,44 @@ function generateRitualCard() {
   cardCtx.fillText(line, cardCanvas.width / 2, y);
 
   finalCardImageURL = cardCanvas.toDataURL("image/jpeg", 0.95);
-  console.log("RITUAL CARD berhasil dirender!");
 }
 
-mintBtn.addEventListener("click", () => {
+mintBtn?.addEventListener("click", () => {
   generateRitualCard();
   mintBtn.hidden = true;
-  connectWalletBtn.hidden = false;
+  if (connectWalletBtn) connectWalletBtn.hidden = false;
 });
 
-connectWalletBtn.addEventListener("click", async () => {
+connectWalletBtn?.addEventListener("click", async () => {
   if (typeof window.ethereum !== "undefined") {
     try {
       connectWalletBtn.textContent = "Connecting Wallet...";
       connectWalletBtn.disabled = true;
 
-      // 1. Meminta izin koneksi wallet
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const walletAddress = accounts[0];
       
       connectWalletBtn.textContent = "Minting NFT...";
 
-      // 2. Menyiapkan koneksi Ethers.js dengan Web3 Provider (MetaMask)
+      // Ethers diinisialisasi secara aman di dalam klik, bebas dari error global
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
-      const ritualContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-      // 3. Menyiapkan URI Metadata
+      // Alamat diproses langsung oleh fungsi Ethers untuk menghindari checksum mismatch
+      const safeContractAddress = ethers.utils.getAddress("0xBb75b9220038bF1B12093551532cb1A89b93f99");
+      const ritualContract = new ethers.Contract(safeContractAddress, CONTRACT_ABI, signer);
+
       const tokenURI = finalCardImageURL;
-
-      console.log("Mengirim transaksi minting ke blockchain...");
       
-      // 4. Memanggil fungsi mintCard di Smart Contract
       const tx = await ritualContract.mintCard(walletAddress, tokenURI);
-      
-      console.log("Transaksi dikirim, menunggu konfirmasi blok...", tx.hash);
-      await tx.wait(); // Menunggu transaksi selesai ditambang di jaringan
+      await tx.wait();
 
       alert(`Sukses! NFT RITUAL CARD berhasil dicetak ke dompet Anda:\n${walletAddress}`);
-      
       connectWalletBtn.textContent = "NFT Minted Successfully!";
       
     } catch (error) {
       console.error("Gagal melakukan proses minting:", error);
-      // Menampilkan pesan error asli secara mendetail ke layar
       alert("ERROR DETAIL: " + (error.message || JSON.stringify(error)));
-      
       connectWalletBtn.textContent = "Connect Wallet";
       connectWalletBtn.disabled = false;
     }
@@ -428,8 +418,8 @@ connectWalletBtn.addEventListener("click", async () => {
   }
 });
 
-// Update tombol Share agar menggunakan Ritual Name yang dinamis
-document.getElementById("shareBtn").addEventListener("click", () => {
+document.getElementById("shareBtn")?.addEventListener("click", () => {
+  if (!identityNameOutput) return;
   const ritualName = identityNameOutput.textContent || "Ritualist";
   const tweetText =
     `I just forged my true identity as "${ritualName}" in The Siggy Soul Forge. Create your magic.\n` +
@@ -440,6 +430,7 @@ document.getElementById("shareBtn").addEventListener("click", () => {
   window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
 });
 
+// Inisialisasi aman
 buildTabs();
 buildSwatchStrip();
 render();
