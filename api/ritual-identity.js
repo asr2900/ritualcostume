@@ -20,11 +20,11 @@
  */
 
 // Vercel secara default membatasi durasi function lebih pendek dari yang
-// kita butuhkan untuk menunggu jawaban Gemini (apalagi dengan
-// maxOutputTokens yang cukup besar). Baris ini memberi tahu Vercel untuk
-// mengizinkan function ini berjalan sampai 30 detik.
+// kita butuhkan untuk menunggu jawaban Gemini, apalagi sekarang kita
+// retry sampai 3x kalau Gemini sedang sibuk. Baris ini memberi tahu
+// Vercel untuk mengizinkan function ini berjalan sampai 45 detik.
 export const config = {
-  maxDuration: 30,
+  maxDuration: 45,
 };
 
 // "gemini-flash-latest" adalah alias yang selalu diarahkan Google ke model
@@ -90,36 +90,53 @@ Respond ONLY in this JSON format, no preamble, no explanation:
   "ritualIdentity": "..."
 }`;
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const requestBody = JSON.stringify({
+    contents: [
+      {
+        parts: [{ text: prompt }],
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 3000,
-          responseMimeType: "application/json",
-        },
-      }),
-      signal: controller.signal,
-    });
+    ],
+    generationConfig: {
+      maxOutputTokens: 3000,
+      responseMimeType: "application/json",
+    },
+  });
 
-    clearTimeout(timeoutId);
+  // Gemini di tier gratis kadang membalas 503 "sedang sibuk" — ini
+  // sementara, jadi kita coba ulang beberapa kali dengan jeda singkat
+  // sebelum benar-benar menyerah.
+  const MAX_ATTEMPTS = 3;
+  let response;
+  let lastErrText = "";
+
+  try {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: requestBody,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) break;
+
+      lastErrText = await response.text();
+      console.error(`Gemini API error (attempt ${attempt}):`, response.status, lastErrText);
+
+      const isRetryable = response.status === 503 || response.status === 429;
+      const isLastAttempt = attempt === MAX_ATTEMPTS;
+      if (!isRetryable || isLastAttempt) break;
+
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
+    }
 
     if (!response.ok) {
-      const errText = await response.text();
-      console.error("Gemini API error:", response.status, errText);
       res.status(502).json({ error: "Upstream API error" });
       return;
     }
