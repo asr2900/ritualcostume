@@ -19,6 +19,14 @@
  * -----------------------------------------------------------
  */
 
+// Vercel secara default membatasi durasi function lebih pendek dari yang
+// kita butuhkan untuk menunggu jawaban Gemini (apalagi dengan
+// maxOutputTokens yang cukup besar). Baris ini memberi tahu Vercel untuk
+// mengizinkan function ini berjalan sampai 30 detik.
+export const config = {
+  maxDuration: 30,
+};
+
 // "gemini-flash-latest" adalah alias yang selalu diarahkan Google ke model
 // Flash stabil terbarunya (saat ini Gemini 3.5 Flash). Pakai alias ini
 // (bukan nama versi spesifik seperti "gemini-2.5-flash") supaya kode ini
@@ -84,7 +92,7 @@ Respond ONLY in this JSON format, no preamble, no explanation:
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
