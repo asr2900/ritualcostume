@@ -58,8 +58,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // Menggunakan gemini-1.5-flash sebagai solusi ampuh menghindari limit ketat di 2.0
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Dikembalikan ke model 2.0-flash yang terbukti didukung oleh versi API kamu
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const promptText = `
     You are a master of the soul forge. Create a mystical, witty AI agent identity based on these attributes:
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     Do not include markdown tags like \`\`\`json.
     `;
 
-    // Cukup gunakan maksimal 2 kali retries agar lebih aman dari limit timeout Vercel
+    // Maksimal 2 kali retries agar lebih aman dari limit timeout Vercel
     const result = await executeWithRetry(async () => {
       return await model.generateContent(promptText);
     }, 2);
