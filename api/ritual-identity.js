@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     }
 
     // Dikembalikan ke model 2.0-flash yang terbukti didukung oleh versi API kamu
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const promptText = `
     You are a master of the soul forge. Create a mystical, witty AI agent identity based on these attributes:
