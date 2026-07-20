@@ -266,7 +266,7 @@ function validateIdentityAnswers() {
 // dari browser supaya API key tidak pernah terekspos ke pengguna.
 async function callAnthropicAPI(layerNames, answer1, answer2) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 28000);
+  const timeoutId = setTimeout(() => controller.abort(), 48000);
 
   try {
     const response = await fetch("/api/ritual-identity", {
