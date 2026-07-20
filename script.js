@@ -389,13 +389,12 @@ connectWalletBtn?.addEventListener("click", async () => {
       
       connectWalletBtn.textContent = "Minting NFT...";
 
-      // Ethers diinisialisasi secara aman di dalam klik, bebas dari error global
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
 
-      // Alamat diproses langsung oleh fungsi Ethers untuk menghindari checksum mismatch
-      const safeContractAddress = ethers.utils.getAddress("0xBb75b9220038bF1B12093551532cb1A89b93f99");
-      const ritualContract = new ethers.Contract(safeContractAddress, CONTRACT_ABI, signer);
+      // Alamat dibersihkan menggunakan fungsi getAddress langsung di dalam event klik (aman dari error global scope)
+      const validAddress = ethers.utils.getAddress("0xBb75b9220038bF1B12093551532cb1A89b93f99");
+      const ritualContract = new ethers.Contract(validAddress, CONTRACT_ABI, signer);
 
       const tokenURI = finalCardImageURL;
       
@@ -430,7 +429,7 @@ document.getElementById("shareBtn")?.addEventListener("click", () => {
   window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
 });
 
-// Inisialisasi aman
+// Inisialisasi utama aplikasi
 buildTabs();
 buildSwatchStrip();
 render();
