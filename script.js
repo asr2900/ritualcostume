@@ -177,26 +177,6 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
   link.click();
 });
 
-// ---------- SHARE TO X ----------
-document.getElementById("shareBtn").addEventListener("click", () => {
-  // Catatan: link intent X hanya bisa mengisi teks, tidak bisa otomatis
-  // melampirkan gambar. Alurnya: unduh dulu JPG-nya, baru user upload
-  // manual saat posting di X.
-  const tweetText =
-    `I just created a really cool custom ritual avatar. Show yourself and create magic.\n` +
-    `${window.location.href}\n` +
-    `Be part of a ritual that fully unites us and chants together.\n` +
-    `#RITUAL @ritualnet`;
-
-  const text = encodeURIComponent(tweetText);
-  window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
-});
-
-// ---------- MINT (placeholder) ----------
-document.getElementById("mintBtn").addEventListener("click", () => {
-  alert("Minting on the Ritual testnet will be built in the next phase.");
-});
-
 // ---------- RITUAL IDENTITY ----------
 const identityPanel = document.getElementById("identityPanel");
 const identityFormView = document.getElementById("identityForm");
@@ -213,7 +193,7 @@ const generateIdentityBtn = document.getElementById("generateIdentityBtn");
 const identityCopyBtn = document.getElementById("identityCopyBtn");
 
 // membaca nama pilihan yang sedang aktif dari LAYERS config,
-// dipakai sebagai bahan prompt ke Anthropic API
+// dipakai sebagai bahan prompt ke Anthropic API / Groq API
 function getActiveLayerNames() {
   const names = {};
   LAYER_ORDER.forEach((layerId) => {
@@ -260,10 +240,7 @@ function validateIdentityAnswers() {
   el.addEventListener("input", () => clearFieldError(el));
 });
 
-// mengirim jawaban + kombinasi layer ke backend (lihat api/ritual-identity.js),
-// yang lalu meneruskannya ke Anthropic API dengan API key yang tersimpan
-// aman di environment server. TIDAK memanggil api.anthropic.com langsung
-// dari browser supaya API key tidak pernah terekspos ke pengguna.
+// mengirim jawaban + kombinasi layer ke backend (lihat api/ritual-identity.js)
 async function callAnthropicAPI(layerNames, answer1, answer2) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 48000);
@@ -293,6 +270,11 @@ async function callAnthropicAPI(layerNames, answer1, answer2) {
 function showIdentityResult(ritualName, ritualIdentity) {
   identityNameOutput.textContent = ritualName;
   identityDescOutput.textContent = ritualIdentity;
+  
+  // Pastikan saat hasil baru muncul, tombol Mint terlihat dan Connect Wallet tersembunyi
+  mintBtn.hidden = false;
+  connectWalletBtn.hidden = true;
+  
   setIdentityPanelView("result");
 }
 
@@ -335,6 +317,98 @@ identityCopyBtn.addEventListener("click", async () => {
   } catch (err) {
     console.error("Copy to clipboard failed:", err);
   }
+});
+
+// ---------- RITUAL CARD & WEB3 ----------
+const mintBtn = document.getElementById("mintBtn");
+const connectWalletBtn = document.getElementById("connectWalletBtn");
+let finalCardImageURL = "";
+
+// Fungsi untuk menggabungkan gambar avatar dan identitas ke dalam satu kanvas kartu
+function generateRitualCard() {
+  const ritualName = identityNameOutput.textContent;
+  const ritualIdentity = identityDescOutput.textContent;
+
+  const cardCanvas = document.createElement("canvas");
+  cardCanvas.width = 800;
+  cardCanvas.height = 1200;
+  const cardCtx = cardCanvas.getContext("2d");
+
+  // Background Kartu
+  cardCtx.fillStyle = "#1a1a1a";
+  cardCtx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
+
+  // Mengambil gambar dari canvas avatar (di tengah atas)
+  // Ukuran asli avatarCanvas adalah 600x600, kita beri jarak margin atas 100px
+  cardCtx.drawImage(canvas, 100, 100, 600, 600);
+
+  // Teks: Ritual Name
+  cardCtx.fillStyle = "#ffffff";
+  cardCtx.font = "bold 48px sans-serif";
+  cardCtx.textAlign = "center";
+  cardCtx.fillText(ritualName.toUpperCase(), cardCanvas.width / 2, 800);
+
+  // Teks: Lore / Identitas (dengan Word Wrap manual)
+  cardCtx.font = "24px sans-serif";
+  cardCtx.fillStyle = "#cccccc";
+  const maxWidth = 700;
+  const words = ritualIdentity.split(' ');
+  let line = '';
+  let y = 860;
+
+  for(let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = cardCtx.measureText(testLine);
+    const testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      cardCtx.fillText(line, cardCanvas.width / 2, y);
+      line = words[n] + ' ';
+      y += 35;
+    } else {
+      line = testLine;
+    }
+  }
+  cardCtx.fillText(line, cardCanvas.width / 2, y);
+
+  // Menyimpan hasil dalam base64 untuk persiapan minting
+  finalCardImageURL = cardCanvas.toDataURL("image/jpeg", 0.95);
+  console.log("RITUAL CARD siap untuk proses minting!");
+}
+
+mintBtn.addEventListener("click", () => {
+  generateRitualCard();
+  mintBtn.hidden = true;
+  connectWalletBtn.hidden = false;
+});
+
+connectWalletBtn.addEventListener("click", async () => {
+  if (typeof window.ethereum !== "undefined") {
+    try {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const walletAddress = accounts[0];
+      
+      alert(`Wallet terhubung: ${walletAddress}\n\nMempersiapkan RITUAL CARD untuk di-mint...`);
+      // Integrasikan logika Smart Contract kamu di sini
+      
+    } catch (error) {
+      console.error("Koneksi wallet ditolak:", error);
+      alert("Koneksi wallet dibatalkan.");
+    }
+  } else {
+    alert("Wallet Web3 tidak terdeteksi. Silakan instal ekstensi seperti MetaMask.");
+  }
+});
+
+// Update tombol Share agar menggunakan Ritual Name yang dinamis
+document.getElementById("shareBtn").addEventListener("click", () => {
+  const ritualName = identityNameOutput.textContent || "Ritualist";
+  const tweetText =
+    `I just forged my true identity as "${ritualName}" in The Siggy Soul Forge. Create your magic.\n` +
+    `${window.location.href}\n` +
+    `#RITUAL @ritualnet`;
+
+  const text = encodeURIComponent(tweetText);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
 });
 
 buildTabs();
