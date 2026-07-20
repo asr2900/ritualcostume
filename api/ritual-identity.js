@@ -1,6 +1,5 @@
 import Groq from "groq-sdk";
 
-// Inisialisasi Groq SDK menggunakan Environment Variable yang baru
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
@@ -58,19 +57,18 @@ export default async function handler(req, res) {
         2. "ritualIdentity": A 2-3 sentence lore/description matching the personality.
         `;
 
-        // Menggunakan LLaMA 3 dari Meta yang berjalan super cepat di server Groq
         const result = await executeWithRetry(async () => {
             return await groq.chat.completions.create({
                 messages: [
                     { role: "system", content: "You are a creative assistant. You always output strictly valid JSON." },
                     { role: "user", content: promptText }
                 ],
-                model: "llama3-8b-8192", 
+                // UPDATE: Menggunakan model terbaru yang aktif di Groq
+                model: "llama-3.1-8b-instant", 
                 response_format: { type: "json_object" }
             });
         }, 2);
 
-        // Menangkap output JSON dari Groq
         const responseText = result.choices[0]?.message?.content || "{}";
         const parsedData = JSON.parse(responseText);
 
