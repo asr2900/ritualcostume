@@ -192,8 +192,7 @@ const identityDescOutput = document.getElementById("identityDescOutput");
 const generateIdentityBtn = document.getElementById("generateIdentityBtn");
 const identityCopyBtn = document.getElementById("identityCopyBtn");
 
-// membaca nama pilihan yang sedang aktif dari LAYERS config,
-// dipakai sebagai bahan prompt ke Anthropic API / Groq API
+// membaca nama pilihan yang sedang aktif dari LAYERS config
 function getActiveLayerNames() {
   const names = {};
   LAYER_ORDER.forEach((layerId) => {
@@ -204,7 +203,6 @@ function getActiveLayerNames() {
   return names;
 }
 
-// mengganti tampilan di dalam #identityPanel: "form" | "loading" | "error" | "result"
 function setIdentityPanelView(view) {
   identityFormView.hidden = view !== "form";
   identityLoadingView.hidden = view !== "loading";
@@ -212,7 +210,6 @@ function setIdentityPanelView(view) {
   identityResultView.hidden = view !== "result";
 }
 
-// mengelola pembukaan panel (dipanggil saat tombol "Reveal My Ritual Identity" diklik)
 function buildIdentityPanel() {
   identityPanel.hidden = false;
   setIdentityPanelView("form");
@@ -240,7 +237,6 @@ function validateIdentityAnswers() {
   el.addEventListener("input", () => clearFieldError(el));
 });
 
-// mengirim jawaban + kombinasi layer ke backend (lihat api/ritual-identity.js)
 async function callAnthropicAPI(layerNames, answer1, answer2) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 48000);
@@ -271,7 +267,6 @@ function showIdentityResult(ritualName, ritualIdentity) {
   identityNameOutput.textContent = ritualName;
   identityDescOutput.textContent = ritualIdentity;
   
-  // Pastikan saat hasil baru muncul, tombol Mint terlihat dan Connect Wallet tersembunyi
   mintBtn.hidden = false;
   connectWalletBtn.hidden = true;
   
@@ -319,12 +314,19 @@ identityCopyBtn.addEventListener("click", async () => {
   }
 });
 
-// ---------- RITUAL CARD & WEB3 ----------
+// ---------- RITUAL CARD & WEB3 (SMART CONTRACT INTEGRATION) ----------
 const mintBtn = document.getElementById("mintBtn");
 const connectWalletBtn = document.getElementById("connectWalletBtn");
 let finalCardImageURL = "";
 
-// Fungsi untuk menggabungkan gambar avatar dan identitas ke dalam satu kanvas kartu
+// Alamat Smart Contract yang baru saja kamu deploy dari Remix
+const CONTRACT_ADDRESS = "0xBb75b9220038bF1B12093551532cb1A89b93f99"; 
+
+// ABI fungsi mintCard pada kontrak Solidity kita
+const CONTRACT_ABI = [
+  "function mintCard(address recipient, string memory tokenURI) public returns (uint256)"
+];
+
 function generateRitualCard() {
   const ritualName = identityNameOutput.textContent;
   const ritualIdentity = identityDescOutput.textContent;
@@ -339,7 +341,6 @@ function generateRitualCard() {
   cardCtx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
 
   // Mengambil gambar dari canvas avatar (di tengah atas)
-  // Ukuran asli avatarCanvas adalah 600x600, kita beri jarak margin atas 100px
   cardCtx.drawImage(canvas, 100, 100, 600, 600);
 
   // Teks: Ritual Name
@@ -370,9 +371,8 @@ function generateRitualCard() {
   }
   cardCtx.fillText(line, cardCanvas.width / 2, y);
 
-  // Menyimpan hasil dalam base64 untuk persiapan minting
   finalCardImageURL = cardCanvas.toDataURL("image/jpeg", 0.95);
-  console.log("RITUAL CARD siap untuk proses minting!");
+  console.log("RITUAL CARD berhasil dirender!");
 }
 
 mintBtn.addEventListener("click", () => {
@@ -384,18 +384,46 @@ mintBtn.addEventListener("click", () => {
 connectWalletBtn.addEventListener("click", async () => {
   if (typeof window.ethereum !== "undefined") {
     try {
+      connectWalletBtn.textContent = "Connecting Wallet...";
+      connectWalletBtn.disabled = true;
+
+      // 1. Meminta izin koneksi wallet
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const walletAddress = accounts[0];
       
-      alert(`Wallet terhubung: ${walletAddress}\n\nMempersiapkan RITUAL CARD untuk di-mint...`);
-      // Integrasikan logika Smart Contract kamu di sini
+      connectWalletBtn.textContent = "Minting NFT...";
+
+      // 2. Menyiapkan koneksi Ethers.js dengan Web3 Provider (MetaMask)
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const ritualContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // 3. Menyiapkan URI Metadata (Menggunakan base64 gambar sementara atau link metadata)
+      // Untuk pengujian awal langsung ke blockchain, kita masukkan data gambar card ke tokenURI
+      const tokenURI = finalCardImageURL;
+
+      console.log("Mengirim transaksi minting ke blockchain...");
+      
+      // 4. Memanggil fungsi mintCard di Smart Contract
+      const tx = await ritualContract.mintCard(walletAddress, tokenURI);
+      
+      console.log("Transaksi dikirim, menunggu konfirmasi blok...", tx.hash);
+      await tx.wait(); // Menunggu transaksi selesai ditambang di jaringan
+
+      alert(`Sukses! NFT RITUAL CARD berhasil dicetak ke dompet Anda:\n${walletAddress}`);
+      
+      connectWalletBtn.textContent = "NFT Minted Successfully!";
       
     } catch (error) {
-      console.error("Koneksi wallet ditolak:", error);
-      alert("Koneksi wallet dibatalkan.");
+      console.error("Gagal melakukan proses minting:", error);
+      alert("Proses minting dibatalkan atau gagal. Periksa konsol untuk detailnya.");
+      connectWalletBtn.textContent = "Connect Wallet";
+      connectWalletBtn.disabled = false;
     }
   } else {
-    alert("Wallet Web3 tidak terdeteksi. Silakan instal ekstensi seperti MetaMask.");
+    alert("Wallet Web3 tidak terdeteksi. Silakan pasang ekstensi MetaMask.");
+    connectWalletBtn.textContent = "Connect Wallet";
+    connectWalletBtn.disabled = false;
   }
 });
 
