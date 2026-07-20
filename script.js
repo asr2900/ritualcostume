@@ -319,8 +319,8 @@ const mintBtn = document.getElementById("mintBtn");
 const connectWalletBtn = document.getElementById("connectWalletBtn");
 let finalCardImageURL = "";
 
-// Alamat Smart Contract yang baru saja kamu deploy dari Remix
-const CONTRACT_ADDRESS = "0xBb75b9220038bF1B12093551532cb1A89b93f99"; 
+// Menggunakan getAddress agar otomatis dikoreksi format checksum-nya oleh Ethers
+const CONTRACT_ADDRESS = ethers.utils.getAddress("0xBb75b9220038bF1B12093551532cb1A89b93f99");
 
 // ABI fungsi mintCard pada kontrak Solidity kita
 const CONTRACT_ABI = [
