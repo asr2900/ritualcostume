@@ -319,8 +319,8 @@ const mintBtn = document.getElementById("mintBtn");
 const connectWalletBtn = document.getElementById("connectWalletBtn");
 let finalCardImageURL = "";
 
-// Memaksa Ethers membaca alamat dengan format lowercase penuh untuk menghindari error checksum
-const CONTRACT_ADDRESS = "0xbb75b9220038bf1b12093551532cb1a89b93f99";
+// Paksa bersihkan format alamat agar lolos dari validasi ketat Ethers.js v5.7.0
+const CONTRACT_ADDRESS = ethers.utils.getAddress("0xbb75b9220038bf1b12093551532cb1a89b93f99");
 
 // ABI fungsi mintCard pada kontrak Solidity kita
 const CONTRACT_ABI = [
