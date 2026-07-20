@@ -103,40 +103,74 @@ Respond ONLY in this JSON format, no preamble, no explanation:
     },
   });
 
-  // Gemini di tier gratis kadang membalas 503 "sedang sibuk" — ini
-  // sementara, jadi kita coba ulang beberapa kali dengan jeda singkat
-  // sebelum benar-benar menyerah.
+  // Gemini di tier gratis kadang membalas 503 "sedang sibuk", atau bahkan
+  // tidak sempat membalas sama sekali sebelum timeout kita sendiri
+  // (AbortController) menyerah duluan. Dua-duanya sama-sama kondisi
+  // sementara, jadi keduanya harus dianggap "boleh dicoba ulang" —
+  // makanya fetch() dibungkus try/catch-nya sendiri di sini, bukan cuma
+  // mengecek response.ok setelah fetch berhasil.
   const MAX_ATTEMPTS = 3;
-  let response;
+  let response = null;
   let lastErrText = "";
+  let lastNetworkError = null;
 
   try {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: requestBody,
-        signal: controller.signal,
-      });
+      try {
+        response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+          signal: controller.signal,
+        });
+        lastNetworkError = null;
+      } catch (fetchErr) {
+        // Ini menangkap AbortError (timeout) dan error jaringan lainnya
+        // yang dulunya lolos dari retry logic dan langsung menjatuhkan
+        // seluruh request.
+        lastNetworkError = fetchErr;
+        response = null;
+        console.error(
+          `Gemini fetch failed (attempt ${attempt}/${MAX_ATTEMPTS}):`,
+          fetchErr.name,
+          fetchErr.message
+        );
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
-      clearTimeout(timeoutId);
+      if (response && response.ok) break;
 
-      if (response.ok) break;
-
-      lastErrText = await response.text();
-      console.error(`Gemini API error (attempt ${attempt}):`, response.status, lastErrText);
-
-      const isRetryable = response.status === 503 || response.status === 429;
       const isLastAttempt = attempt === MAX_ATTEMPTS;
-      if (!isRetryable || isLastAttempt) break;
+
+      if (response && !response.ok) {
+        lastErrText = await response.text();
+        console.error(
+          `Gemini API error (attempt ${attempt}/${MAX_ATTEMPTS}):`,
+          response.status,
+          lastErrText
+        );
+        const isRetryable = response.status === 503 || response.status === 429;
+        if (!isRetryable || isLastAttempt) break;
+      } else if (isLastAttempt) {
+        // habis attempt terakhir dan masih gagal karena network/timeout
+        break;
+      }
 
       await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
     }
 
-    if (!response.ok) {
+    if (lastNetworkError && (!response || !response.ok)) {
+      // Semua percobaan habis karena timeout/abort, bukan karena Gemini
+      // menjawab dengan error. Kasih pesan yang lebih jujur ke user.
+      res.status(504).json({ error: "Model sedang lambat merespons, coba lagi sebentar" });
+      return;
+    }
+
+    if (!response || !response.ok) {
       res.status(502).json({ error: "Upstream API error" });
       return;
     }
