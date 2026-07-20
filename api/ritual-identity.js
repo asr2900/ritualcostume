@@ -20,18 +20,25 @@
  */
 
 // Vercel secara default membatasi durasi function lebih pendek dari yang
-// kita butuhkan untuk menunggu jawaban Gemini, apalagi sekarang kita
-// retry sampai 3x kalau Gemini sedang sibuk. Baris ini memberi tahu
-// Vercel untuk mengizinkan function ini berjalan sampai 45 detik.
+// kita butuhkan untuk menunggu jawaban Gemini, apalagi sekarang kita bisa
+// mencoba sampai 2 model x 2 percobaan, masing-masing dengan timeout 12
+// detik. Worst-case itu bisa mendekati 55 detik, jadi kita beri jatah
+// 60 detik supaya tidak keburu dipotong Vercel di tengah proses fallback.
 export const config = {
-  maxDuration: 45,
+  maxDuration: 60,
 };
 
 // "gemini-flash-latest" adalah alias yang selalu diarahkan Google ke model
 // Flash stabil terbarunya (saat ini Gemini 3.5 Flash). Pakai alias ini
 // (bukan nama versi spesifik seperti "gemini-2.5-flash") supaya kode ini
 // tidak rusak lagi kalau Google pensiunkan versi model tertentu di masa depan.
-const GEMINI_MODEL = "gemini-flash-latest";
+//
+// Model paling baru/preview cenderung paling sering kena error 503 "high
+// demand" karena kapasitas server-nya masih terbatas. Makanya kalau model
+// utama gagal terus, kita fallback ke model yang sudah lebih lama & stabil
+// kapasitasnya — biasanya jauh lebih jarang overload.
+const PRIMARY_MODEL = "gemini-flash-latest";
+const FALLBACK_MODEL = "gemini-2.0-flash";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -90,7 +97,6 @@ Respond ONLY in this JSON format, no preamble, no explanation:
   "ritualIdentity": "..."
 }`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
   const requestBody = JSON.stringify({
     contents: [
       {
@@ -103,64 +109,76 @@ Respond ONLY in this JSON format, no preamble, no explanation:
     },
   });
 
+  const buildUrl = (model) =>
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  // Coba satu kali panggilan ke model tertentu, dengan timeout sendiri.
+  // Mengembalikan { response, networkError } supaya pemanggil bisa
+  // memutuskan apakah perlu retry / fallback / menyerah.
+  const callGemini = async (model) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(buildUrl(model), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: requestBody,
+        signal: controller.signal,
+      });
+      return { response, networkError: null };
+    } catch (fetchErr) {
+      // Ini menangkap AbortError (timeout) dan error jaringan lainnya
+      // yang dulunya lolos dari retry logic dan langsung menjatuhkan
+      // seluruh request.
+      return { response: null, networkError: fetchErr };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
   // Gemini di tier gratis kadang membalas 503 "sedang sibuk", atau bahkan
   // tidak sempat membalas sama sekali sebelum timeout kita sendiri
   // (AbortController) menyerah duluan. Dua-duanya sama-sama kondisi
-  // sementara, jadi keduanya harus dianggap "boleh dicoba ulang" —
-  // makanya fetch() dibungkus try/catch-nya sendiri di sini, bukan cuma
-  // mengecek response.ok setelah fetch berhasil.
-  const MAX_ATTEMPTS = 3;
+  // sementara, jadi keduanya harus dianggap "boleh dicoba ulang".
+  //
+  // Model terbaru/preview paling rawan overload, jadi kalau PRIMARY_MODEL
+  // gagal terus (503/429/timeout) sampai habis jatah percobaan, kita coba
+  // sekali lagi dengan FALLBACK_MODEL yang kapasitasnya biasanya lebih
+  // longgar, sebelum benar-benar menyerah.
+  const ATTEMPTS_PER_MODEL = 2;
+  const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
   let response = null;
   let lastErrText = "";
   let lastNetworkError = null;
 
   try {
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+    outer: for (const model of modelsToTry) {
+      for (let attempt = 1; attempt <= ATTEMPTS_PER_MODEL; attempt++) {
+        const result = await callGemini(model);
+        response = result.response;
+        lastNetworkError = result.networkError;
 
-      try {
-        response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: requestBody,
-          signal: controller.signal,
-        });
-        lastNetworkError = null;
-      } catch (fetchErr) {
-        // Ini menangkap AbortError (timeout) dan error jaringan lainnya
-        // yang dulunya lolos dari retry logic dan langsung menjatuhkan
-        // seluruh request.
-        lastNetworkError = fetchErr;
-        response = null;
-        console.error(
-          `Gemini fetch failed (attempt ${attempt}/${MAX_ATTEMPTS}):`,
-          fetchErr.name,
-          fetchErr.message
-        );
-      } finally {
-        clearTimeout(timeoutId);
+        if (lastNetworkError) {
+          console.error(
+            `Gemini fetch failed [${model}] (attempt ${attempt}/${ATTEMPTS_PER_MODEL}):`,
+            lastNetworkError.name,
+            lastNetworkError.message
+          );
+        } else if (response.ok) {
+          break outer;
+        } else {
+          lastErrText = await response.text();
+          console.error(
+            `Gemini API error [${model}] (attempt ${attempt}/${ATTEMPTS_PER_MODEL}):`,
+            response.status,
+            lastErrText
+          );
+          const isRetryable = response.status === 503 || response.status === 429;
+          if (!isRetryable) break outer;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
       }
-
-      if (response && response.ok) break;
-
-      const isLastAttempt = attempt === MAX_ATTEMPTS;
-
-      if (response && !response.ok) {
-        lastErrText = await response.text();
-        console.error(
-          `Gemini API error (attempt ${attempt}/${MAX_ATTEMPTS}):`,
-          response.status,
-          lastErrText
-        );
-        const isRetryable = response.status === 503 || response.status === 429;
-        if (!isRetryable || isLastAttempt) break;
-      } else if (isLastAttempt) {
-        // habis attempt terakhir dan masih gagal karena network/timeout
-        break;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
     }
 
     if (lastNetworkError && (!response || !response.ok)) {
