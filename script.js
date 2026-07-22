@@ -7,7 +7,6 @@
 const canvas = document.getElementById("avatarCanvas");
 const ctx = canvas ? canvas.getContext("2d") : null;
 
-// state: pilihan aktif tiap kategori
 const state = {};
 if (typeof LAYERS !== "undefined") {
   LAYERS.forEach((layer) => {
@@ -18,7 +17,6 @@ if (typeof LAYERS !== "undefined") {
 let activeTab = typeof TAB_ORDER !== "undefined" ? TAB_ORDER[0] : "";
 let renderCounter = 0;
 
-// Tombol Reveal baru aktif setelah pengguna mengganti minimal satu item.
 let userHasCustomized = false;
 function markCustomized() {
   if (userHasCustomized) return;
@@ -35,10 +33,7 @@ function loadImage(src) {
   if (imageCache[src]) return Promise.resolve(imageCache[src]);
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => {
-      imageCache[src] = img;
-      resolve(img);
-    };
+    img.onload = () => { imageCache[src] = img; resolve(img); };
     img.onerror = reject;
     img.src = src;
   });
@@ -54,7 +49,7 @@ function findOption(layerId, optionId) {
 
 async function render() {
   const myRenderId = ++renderCounter;
-  if (!canvas || !ctx) return;
+  if (!canvas || !ctx || typeof LAYER_ORDER === "undefined") return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const failedSrcs = [];
@@ -86,7 +81,7 @@ function showLoadStatus(failedSrcs) {
   statusEl.innerHTML =
     "⚠ Couldn't load: " +
     failedSrcs.map((s) => `<code>${s}</code>`).join(", ") +
-    ". Check the filename & location in your GitHub repo — it must match config.js exactly (case-sensitive).";
+    ". Cek nama & lokasi file di repo GitHub — harus sama persis dengan config.js (case-sensitive).";
   statusEl.classList.add("visible");
 }
 
@@ -179,4 +174,28 @@ document.getElementById("downloadBtn")?.addEventListener("click", () => {
 });
 
 // ---------- KUMPULKAN NAMA PILIHAN AKTIF ----------
-function getActiveL
+function getActiveLayerNames() {
+  const names = {};
+  if (typeof LAYER_ORDER === "undefined") return names;
+  LAYER_ORDER.forEach((layerId) => {
+    const layer = findLayer(layerId);
+    const option = findOption(layerId, state[layerId]);
+    if (layer) names[layer.label] = option ? option.name : "None";
+  });
+  return names;
+}
+
+// ---------- PINDAH KE SUB-WEB IDENTITY ----------
+document.getElementById("revealIdentityBtn")?.addEventListener("click", () => {
+  if (!canvas) return;
+  const bgOption = findOption("background", state["background"]);
+  sessionStorage.setItem("ritual.avatar", canvas.toDataURL("image/png"));
+  sessionStorage.setItem("ritual.layerNames", JSON.stringify(getActiveLayerNames()));
+  sessionStorage.setItem("ritual.bg", bgOption && bgOption.src ? bgOption.src : "");
+  window.location.href = "identity.html";
+});
+
+// Inisialisasi
+buildTabs();
+buildSwatchStrip();
+render();
