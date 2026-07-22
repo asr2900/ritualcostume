@@ -37,7 +37,7 @@ const LAYERS = [
       { id: "hat-08", name: "dignified", src: "assets/hat/hat-08.png" },
       { id: "hat-09", name: "graceful", src: "assets/hat/hat-09.png" },
       { id: "hat-10", name: "yellow siggy", src: "assets/hat/hat-10.png" },
-      { id: "hat-11", name: "ren siggy", src: "assets/hat/hat-11.png" },
+      { id: "hat-11", name: "red siggy", src: "assets/hat/hat-11.png" },
     ],
   },
   {
