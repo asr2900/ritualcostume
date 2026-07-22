@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RitualCostume — Ritual Identity</title>
+  <link rel="icon" href="assets/logo/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="identity-page">
+  <div class="ritual-bg-noise"></div>
+
+  <header class="site-header">
+    <a class="back-link" href="index.html">‹ Back to Lab</a>
+    <span class="wordmark">RITUAL <span class="wordmark-thin">COSTUME</span></span>
+    <span class="tagline">ritual identity</span>
+  </header>
+
+  <main class="identity-stage">
+    <!-- FORM -->
+    <section id="identityForm" class="identity-card">
+      <div class="identity-avatar-preview">
+        <img id="identityAvatarPreview" alt="Your avatar" />
+      </div>
+      <h1 class="identity-eyebrow">✦ Reveal Your Ritual Identity</h1>
+
+      <label class="identity-label" for="identityQ1">In one sentence, why did you first feel drawn to join the Ritual community?</label>
+      <textarea id="identityQ1" class="identity-textarea"></textarea>
+
+      <label class="identity-label" for="identityQ2">Of everything Ritual is building, what do you believe will change something most?</label>
+      <textarea id="identityQ2" class="identity-textarea"></textarea>
+
+      <p id="identityNote" class="identity-note">Your answers shape a one-of-a-kind identity. There are no wrong answers.</p>
+      <button id="generateIdentityBtn" class="btn btn-primary identity-submit">Generate My Identity</button>
+    </section>
+
+    <!-- LOADING: animasi magic -->
+    <section id="identityLoading" class="identity-loading" hidden>
+      <div class="magic-orb">
+        <span class="magic-ring"></span>
+        <span class="magic-ring"></span>
+        <span class="magic-core"></span>
+      </div>
+      <p>Forging your ritual identity…</p>
+    </section>
+
+    <!-- ERROR -->
+    <section id="identityErrorView" class="identity-error-view" hidden>
+      <p>The ritual is uncertain right now. Try again in a moment.</p>
+      <button id="identityErrorRetryBtn" class="btn btn-ghost">Try Again</button>
+    </section>
+
+    <!-- RESULT: kartu bertema magic -->
+    <section id="identityResult" class="identity-result" hidden>
+      <div class="ritual-card">
+        <div class="ritual-card-glow"></div>
+        <div class="ritual-card-pfp">
+          <img id="cardAvatar" alt="Ritual avatar" />
+        </div>
+        <p class="identity-label-small">Ritual Name</p>
+        <h2 id="identityNameOutput" class="identity-name"></h2>
+        <p id="identityDescOutput" class="identity-desc"></p>
+      </div>
+
+      <div class="identity-result-actions">
+        <button id="mintBtn" class="btn btn-primary">Mint NFT</button>
+        <button id="connectWalletBtn" class="btn btn-primary" hidden>Connect Wallet</button>
+        <button id="shareBtn" class="btn btn-ghost">Share to X</button>
+      </div>
+      <div class="identity-result-actions">
+        <button id="identityCopyBtn" class="btn btn-ghost">Copy Text</button>
+        <button id="startOverBtn" class="btn btn-ghost">Start Over</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="identity.js"></script>
+</body>
+</html>
