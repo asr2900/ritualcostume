@@ -1,19 +1,14 @@
 /**
  * identity.js — halaman Ritual Identity.
- * - Membaca avatar + background + pilihan dari sessionStorage (dari builder).
- * - Memanggil /api/ritual-identity.
- * - Menggambar KARTU NFT (trading card) di canvas -> jadi preview + gambar mint.
- * - Minting lewat /api/mint-metadata + smart contract, lalu tampilkan link explorer.
+ * Baca avatar + background dari sessionStorage, panggil API identity,
+ * gambar KARTU NFT di canvas -> preview + gambar mint, lalu mint + link explorer.
  */
 
-// ---------- DATA DARI BUILDER ----------
 const avatarImage = sessionStorage.getItem("ritual.avatar");
 const bgSrc = sessionStorage.getItem("ritual.bg") || "";
 
-// Kalau dibuka tanpa membangun avatar dulu, kembalikan ke builder.
 if (!avatarImage) window.location.replace("index.html");
 
-// ---------- ELEMEN ----------
 const identityFormView = document.getElementById("identityForm");
 const identityLoadingView = document.getElementById("identityLoading");
 const identityErrorView = document.getElementById("identityErrorView");
@@ -32,12 +27,10 @@ const mintStatus = document.getElementById("mintStatus");
 if (previewImg && avatarImage) previewImg.src = avatarImage;
 if (identityQ1) identityQ1.focus();
 
-// Simpan hasil identity (dipakai share/copy/regenerate)
 let currentName = "";
 let currentIdentity = "";
 let finalCardImageURL = "";
 
-// ---------- VIEW SWITCH ----------
 function setView(view) {
   if (identityFormView) identityFormView.hidden = view !== "form";
   if (identityLoadingView) identityLoadingView.hidden = view !== "loading";
@@ -45,7 +38,6 @@ function setView(view) {
   if (identityResultView) identityResultView.hidden = view !== "result";
 }
 
-// ---------- VALIDASI ----------
 function clearFieldError(el) { if (el) el.classList.remove("field-error"); }
 function validateAnswers() {
   let valid = true;
@@ -59,7 +51,6 @@ function validateAnswers() {
   if (el) el.addEventListener("input", () => clearFieldError(el));
 });
 
-// ---------- PANGGIL API IDENTITY ----------
 async function callIdentityAPI(answer1, answer2) {
   let layerNames = {};
   try { layerNames = JSON.parse(sessionStorage.getItem("ritual.layerNames") || "{}"); } catch (e) {}
@@ -86,11 +77,9 @@ async function showIdentityResult(ritualName, ritualIdentity) {
   currentName = ritualName;
   currentIdentity = ritualIdentity;
 
-  // Gambar kartu NFT asli, lalu tampilkan sebagai preview (WYSIWYM)
   await generateRitualCard(ritualName, ritualIdentity);
   if (cardPreviewImg) cardPreviewImg.src = finalCardImageURL;
 
-  // reset tombol & status mint
   const mintBtn = document.getElementById("mintBtn");
   const connectWalletBtn = document.getElementById("connectWalletBtn");
   if (mintBtn) { mintBtn.hidden = false; mintBtn.disabled = false; }
@@ -139,7 +128,7 @@ identityCopyBtn?.addEventListener("click", async () => {
 });
 
 // ===========================================================
-//  GAMBAR KARTU NFT (trading-card ala Monanimals)
+//  GAMBAR KARTU NFT (trading-card)
 // ===========================================================
 function loadImagePromise(src) {
   return new Promise((resolve, reject) => {
@@ -161,7 +150,6 @@ function roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
-// Gambar img dengan mode "cover" ke area (x,y,w,h)
 function drawCover(c, img, x, y, w, h) {
   const ir = img.width / img.height;
   const r = w / h;
@@ -204,7 +192,6 @@ function wrapText(c, text, x, y, maxWidth, lineHeight) {
 }
 
 async function generateRitualCard(ritualName, ritualIdentity) {
-  // pastikan font sudah siap sebelum menggambar teks
   if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
 
   const W = 800, H = 1120;
@@ -212,7 +199,7 @@ async function generateRitualCard(ritualName, ritualIdentity) {
   cardCanvas.width = W; cardCanvas.height = H;
   const c = cardCanvas.getContext("2d");
 
-  // 1) LATAR = background avatar (fallback: avatar / gradient)
+  // 1) LATAR = background avatar
   let bgImg = null;
   try { if (bgSrc) bgImg = await loadImagePromise(bgSrc); } catch (e) {}
   if (!bgImg) { try { bgImg = await loadImagePromise(avatarImage); } catch (e) {} }
@@ -224,14 +211,13 @@ async function generateRitualCard(ritualName, ritualIdentity) {
     g.addColorStop(0, "#0e2a22"); g.addColorStop(1, "#05100c");
     c.fillStyle = g; c.fillRect(0, 0, W, H);
   }
-  // overlay gelap supaya teks terbaca
   const ov = c.createLinearGradient(0, 0, 0, H);
   ov.addColorStop(0, "rgba(5,16,12,0.55)");
   ov.addColorStop(0.55, "rgba(5,16,12,0.30)");
   ov.addColorStop(1, "rgba(5,16,12,0.92)");
   c.fillStyle = ov; c.fillRect(0, 0, W, H);
 
-  // 2) BINGKAI MAGIC (dua garis membulat)
+  // 2) BINGKAI MAGIC
   c.strokeStyle = "rgba(45,218,192,0.85)"; c.lineWidth = 6;
   roundRect(c, 24, 24, W - 48, H - 48, 34); c.stroke();
   c.strokeStyle = "rgba(45,218,192,0.40)"; c.lineWidth = 2;
@@ -260,7 +246,6 @@ async function generateRitualCard(ritualName, ritualIdentity) {
   c.fillStyle = "#2ddac0";
   c.fillText(name, startX + runeSize + gap, titleY);
 
-  // divider
   c.strokeStyle = "rgba(45,218,192,0.35)"; c.lineWidth = 2;
   c.beginPath(); c.moveTo(80, titleY + 26); c.lineTo(W - 80, titleY + 26); c.stroke();
 
@@ -270,7 +255,7 @@ async function generateRitualCard(ritualName, ritualIdentity) {
   c.fillStyle = "#f4fffb";
   wrapText(c, ritualIdentity, W / 2, titleY + 74, W - 200, 38);
 
-  // 6) FOOTER: brand + rarity
+  // 6) FOOTER
   const footY = H - 66;
   c.strokeStyle = "rgba(45,218,192,0.25)"; c.lineWidth = 1;
   c.beginPath(); c.moveTo(80, footY - 30); c.lineTo(W - 80, footY - 30); c.stroke();
@@ -367,7 +352,6 @@ async function prepareTokenURI(imageDataUrl, ritualName, ritualIdentity) {
 }
 
 mintBtn?.addEventListener("click", async () => {
-  // kartu sudah dibuat di showIdentityResult, tapi jaga-jaga:
   if (!finalCardImageURL) await generateRitualCard(currentName, currentIdentity);
   mintBtn.hidden = true;
   if (connectWalletBtn) connectWalletBtn.hidden = false;
@@ -401,7 +385,6 @@ connectWalletBtn?.addEventListener("click", async () => {
     const tx = await ritualContract.mintCard(walletAddress, tokenURI);
     await tx.wait();
 
-    // Link ke Ritual Explorer untuk cek transaksi
     const explorerBase = RITUAL_CHAIN.blockExplorerUrls[0].replace(/\/$/, "");
     const txUrl = `${explorerBase}/tx/${tx.hash}`;
     showMintSuccess(walletAddress, txUrl);
@@ -423,5 +406,5 @@ document.getElementById("shareBtn")?.addEventListener("click", () => {
     `${window.location.origin}\n` +
     `#RITUAL @ritualnet`;
   const text = encodeURIComponent(tweetText);
-  window.open(`{{https://twitter.com/intent/tweet?text=${text}}}`, "_blank");
+  window.open("https://twitter.com/intent/tweet?text=" + text, "_blank");
 });
