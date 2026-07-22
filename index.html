@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RitualCostume — Avatar Lab</title>
+  <link rel="icon" href="assets/logo/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ritual-bg-noise"></div>
+
+  <header class="site-header">
+    <div class="logo-frame"><img class="logo-img" src="assets/logo/logo.png" alt="RitualCostume logo" /></div>
+    <span class="wordmark">RITUAL <span class="wordmark-thin">COSTUME</span></span>
+    <span class="tagline">avatar lab</span>
+  </header>
+
+  <main class="lab">
+    <!-- STAGE: preview avatar (kotak) -->
+    <section class="stage">
+      <div class="stage-frame">
+        <canvas id="avatarCanvas" width="600" height="600"></canvas>
+      </div>
+      <div class="stage-actions">
+        <button id="downloadBtn" class="btn btn-ghost">Download JPG</button>
+        <button id="revealIdentityBtn" class="btn btn-primary" disabled>Reveal My Ritual Identity</button>
+      </div>
+      <p id="revealHint" class="stage-hint">Customize your avatar first to unlock your ritual identity.</p>
+    </section>
+
+    <!-- CONTROLS -->
+    <section class="controls">
+      <div id="categoryTabs" class="tabs"></div>
+      <div class="swatch-scroll-wrap">
+        <button id="scrollLeftBtn" class="scroll-btn" aria-label="Scroll left">‹</button>
+        <div id="swatchStrip" class="swatch-strip"></div>
+        <button id="scrollRightBtn" class="scroll-btn" aria-label="Scroll right">›</button>
+      </div>
+      <p id="loadStatus" class="load-status"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">step by step, build your own character.</footer>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
