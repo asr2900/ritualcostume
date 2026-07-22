@@ -327,7 +327,7 @@ let finalCardImageURL = "";
 const CONTRACT_ABI = [
   "function mintCard(address recipient, string memory tokenURI) public returns (uint256)"
 ];
-const CONTRACT_ADDRESS = "0xBb75b9220038bF1B12093551532cb1A89b93f99";
+const CONTRACT_ADDRESS = "0x6eb62E4B52AC49AD71792f47D853736ee8731e3D";
 
 // Detail jaringan Ritual testnet — dipakai untuk memastikan wallet
 // pengguna terhubung ke chain yang benar sebelum mint. Kalau contract-mu
