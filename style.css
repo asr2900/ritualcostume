@@ -1,20 +1,18 @@
 /* -----------------------------------------------------------
-   DESIGN TOKENS
-   Tema: magic dark green x turquoise, black & white sebagai sub color
+   DESIGN TOKENS — magic dark green x turquoise
 ----------------------------------------------------------- */
 :root {
-  --ink: #071a15;          /* latar utama, hijau gelap nyaris hitam */
-  --ink-raised: #0e2a22;   /* panel di atas latar */
-  --white: #f4fffb;        /* teks utama */
-  --white-dim: #9fc9bd;    /* teks sekunder */
-  --black: #05100c;        /* sub color gelap (border, bayangan) */
-  --teal: #2ddac0;         /* aksen magic utama */
-  --teal-deep: #12876f;    /* aksen magic gelap */
+  --ink: #071a15;
+  --ink-raised: #0e2a22;
+  --white: #f4fffb;
+  --white-dim: #9fc9bd;
+  --black: #05100c;
+  --teal: #2ddac0;
+  --teal-deep: #12876f;
   --teal-soft: rgba(45, 218, 192, 0.12);
 
   --font-display: "Baloo 2", sans-serif;
   --font-body: "Quicksand", sans-serif;
-
   --radius: 14px;
 }
 
@@ -28,6 +26,8 @@ html, body {
   font-family: var(--font-body);
   min-height: 100vh;
 }
+
+[hidden] { display: none !important; }
 
 .ritual-bg-noise {
   position: fixed;
@@ -61,26 +61,15 @@ html, body {
   background: var(--ink-raised);
   border: 1px solid rgba(45, 218, 192, 0.4);
 }
-
-.logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+.logo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .wordmark {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.4rem;
-  letter-spacing: 0.01em;
   color: var(--white);
 }
-
-.wordmark-thin {
-  font-weight: 500;
-  color: var(--teal);
-}
+.wordmark-thin { font-weight: 500; color: var(--teal); }
 
 .tagline {
   font-family: var(--font-body);
@@ -92,8 +81,18 @@ html, body {
   letter-spacing: 0.03em;
 }
 
+.back-link {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--white-dim);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.back-link:hover { color: var(--teal); }
+
 /* -----------------------------------------------------------
-   LAYOUT
+   LAYOUT (builder)
 ----------------------------------------------------------- */
 .lab {
   position: relative;
@@ -105,13 +104,10 @@ html, body {
   max-width: 1200px;
   margin: 0 auto;
 }
-
-@media (max-width: 860px) {
-  .lab { grid-template-columns: 1fr; }
-}
+@media (max-width: 860px) { .lab { grid-template-columns: 1fr; } }
 
 /* -----------------------------------------------------------
-   STAGE (preview avatar + kucing lari)
+   STAGE — preview avatar KOTAK (tanpa kucing)
 ----------------------------------------------------------- */
 .stage {
   display: flex;
@@ -126,89 +122,31 @@ html, body {
   aspect-ratio: 1 / 1;
 }
 
-.stage-ring {
-  position: absolute;
-  inset: -14px;
-  border-radius: 50%;
-  border: 1px dashed rgba(45, 218, 192, 0.3);
-}
-
+/* Frame kotak mengikuti bentuk asli gambar */
 #avatarCanvas {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: var(--radius);
   background: var(--ink-raised);
-  box-shadow: 0 0 0 1px rgba(244, 255, 251, 0.08), 0 0 40px rgba(45, 218, 192, 0.15), 0 20px 60px rgba(0,0,0,0.5);
+  border: 1px solid rgba(45, 218, 192, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(244, 255, 251, 0.08),
+    0 0 40px rgba(45, 218, 192, 0.15),
+    0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-/* ---- Kucing hitam berlari mengelilingi avatar ---- */
-.cat-runners {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.stage-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; justify-content: center; }
+
+.stage-hint {
+  font-size: 0.78rem;
+  color: var(--white-dim);
+  text-align: center;
+  margin: 0;
 }
 
-/* .cat-track berputar penuh 360deg -> ini yang membuat posisi kucing
-   menyapu lingkaran. Ukurannya sama persis dengan stage-frame (inset:0)
-   supaya radiusnya otomatis menyesuaikan ukuran layar. */
-.cat-track {
-  position: absolute;
-  inset: 0;
-  animation: track-spin 8s linear infinite;
-}
-.cat-track-2 { animation-delay: -2s; }
-.cat-track-3 { animation-delay: -4s; }
-.cat-track-4 { animation-delay: -6s; }
-
-/* .cat-pos diletakkan di titik atas lingkaran (top:0, left:50%), lalu
-   diputar balik (arah sebaliknya, kecepatan sama) supaya kucingnya
-   tidak ikut miring/terbalik, cuma posisinya saja yang berjalan. */
-.cat-pos {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 40px;
-  height: 25px;
-  margin-left: -20px;
-  margin-top: -4px;
-  animation: track-counter-spin 8s linear infinite;
-}
-.cat-pos-2 { animation-delay: -2s; }
-.cat-pos-3 { animation-delay: -4s; }
-.cat-pos-4 { animation-delay: -6s; }
-
-@keyframes track-spin { to { transform: rotate(360deg); } }
-@keyframes track-counter-spin { to { transform: rotate(-360deg); } }
-
-.cat-svg {
-  width: 100%;
-  height: 100%;
-  animation: run-bounce 0.35s ease-in-out infinite;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
-}
-
-@keyframes run-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-}
-
-.leg-a { animation: leg-swing-a 0.35s ease-in-out infinite; transform-origin: top center; }
-.leg-b { animation: leg-swing-b 0.35s ease-in-out infinite; transform-origin: top center; }
-
-@keyframes leg-swing-a {
-  0%, 100% { transform: rotate(18deg); }
-  50% { transform: rotate(-18deg); }
-}
-@keyframes leg-swing-b {
-  0%, 100% { transform: rotate(-18deg); }
-  50% { transform: rotate(18deg); }
-}
-
-.stage-actions {
-  display: flex;
-  gap: 0.7rem;
-}
-
+/* -----------------------------------------------------------
+   BUTTONS
+----------------------------------------------------------- */
 .btn {
   font-family: var(--font-display);
   font-size: 0.85rem;
@@ -221,205 +159,24 @@ html, body {
 }
 .btn:hover { transform: translateY(-1px) scale(1.02); }
 .btn:active { transform: translateY(0); }
+.btn:disabled { cursor: not-allowed; opacity: 0.5; transform: none; }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--teal), var(--teal-deep));
   color: var(--black);
 }
-
 .btn-ghost {
   background: transparent;
   border-color: rgba(244, 255, 251, 0.25);
   color: var(--white);
 }
 
-.btn-mint {
-  width: 100%;
-  max-width: 420px;
-  background: var(--teal-soft);
-  border: 1px solid rgba(45, 218, 192, 0.35);
-  color: var(--teal);
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.8rem;
-  padding: 0.8rem 1rem;
-  border-radius: var(--radius);
-}
-.btn-mint:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
 /* -----------------------------------------------------------
-   RITUAL IDENTITY PANEL
+   CONTROLS (tabs + swatch strip)
 ----------------------------------------------------------- */
+.controls { display: flex; flex-direction: column; gap: 1rem; }
 
-/* PENTING: tanpa baris ini, elemen dengan atribut [hidden] tetap
-   tampil kalau class-nya sendiri mengatur "display" (misal
-   .identity-loading { display: flex }). Author CSS mengalahkan
-   default browser untuk [hidden], jadi harus dipaksa di sini. */
-[hidden] {
-  display: none !important;
-}
-
-.identity-panel {
-  width: 100%;
-  max-width: 420px;
-  background: var(--ink-raised);
-  border: 1px solid rgba(45, 218, 192, 0.25);
-  border-radius: var(--radius);
-  padding: 1.3rem;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.identity-panel:not([hidden]) {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.identity-eyebrow {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--teal);
-  margin: 0 0 0.9rem;
-  letter-spacing: 0.02em;
-}
-
-.identity-label {
-  display: block;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.78rem;
-  color: var(--white-dim);
-  margin: 0.9rem 0 0.4rem;
-}
-
-.identity-textarea {
-  width: 100%;
-  resize: vertical;
-  min-height: 52px;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--white);
-  background: var(--ink);
-  border: 1px solid rgba(244, 255, 251, 0.15);
-  border-radius: 10px;
-  padding: 0.6rem 0.7rem;
-  transition: border-color 0.15s ease;
-}
-
-.identity-textarea:focus {
-  outline: none;
-  border-color: var(--teal);
-}
-
-.identity-textarea.field-error {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px var(--teal-soft);
-}
-
-.identity-note {
-  font-size: 0.72rem;
-  color: var(--white-dim);
-  margin: 0.8rem 0 0;
-  line-height: 1.5;
-}
-
-.identity-submit {
-  width: 100%;
-  margin-top: 1rem;
-}
-
-.identity-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 1rem 0;
-  text-align: center;
-  font-family: var(--font-body);
-  font-size: 0.82rem;
-  color: var(--white-dim);
-}
-
-.identity-pulse {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--teal);
-  animation: identity-pulse-anim 1.1s ease-in-out infinite;
-}
-
-@keyframes identity-pulse-anim {
-  0%, 100% { transform: scale(0.75); opacity: 0.5; }
-  50% { transform: scale(1.15); opacity: 1; }
-}
-
-.identity-error-view {
-  text-align: center;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--white-dim);
-}
-
-.identity-error-view p {
-  margin: 0 0 1rem;
-}
-
-.identity-label-small {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--white-dim);
-  margin: 0 0 0.3rem;
-}
-
-.identity-name {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.4rem;
-  color: var(--teal);
-  margin: 0 0 1rem;
-  line-height: 1.25;
-}
-
-.identity-desc {
-  font-family: var(--font-body);
-  font-size: 0.88rem;
-  color: var(--white);
-  line-height: 1.6;
-  margin: 0;
-}
-
-.identity-result-actions {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 1.2rem;
-}
-
-.identity-result-actions .btn {
-  flex: 1;
-}
-
-/* -----------------------------------------------------------
-   CONTROLS (tabs + strip horizontal)
------------------------------------------------------------ */
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
+.tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 .tab-btn {
   font-family: var(--font-display);
@@ -433,23 +190,14 @@ html, body {
   cursor: pointer;
   transition: all 0.15s ease;
 }
-
-.tab-btn:hover {
-  color: var(--white);
-  border-color: rgba(45, 218, 192, 0.4);
-}
-
+.tab-btn:hover { color: var(--white); border-color: rgba(45, 218, 192, 0.4); }
 .tab-btn.active {
   color: var(--black);
   background: linear-gradient(135deg, var(--teal), var(--teal-deep));
   border-color: transparent;
 }
 
-.swatch-scroll-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+.swatch-scroll-wrap { display: flex; align-items: center; gap: 0.5rem; }
 
 .swatch-strip {
   display: flex;
@@ -460,17 +208,12 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: var(--teal-deep) transparent;
 }
-
 .swatch-strip::-webkit-scrollbar { height: 6px; }
-.swatch-strip::-webkit-scrollbar-thumb {
-  background: var(--teal-deep);
-  border-radius: 999px;
-}
+.swatch-strip::-webkit-scrollbar-thumb { background: var(--teal-deep); border-radius: 999px; }
 
 .scroll-btn {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 32px; height: 32px;
   border-radius: 50%;
   border: 1px solid rgba(244, 255, 251, 0.15);
   background: var(--ink-raised);
@@ -490,8 +233,7 @@ html, body {
 }
 
 .swatch {
-  width: 64px;
-  height: 64px;
+  width: 64px; height: 64px;
   border-radius: var(--radius);
   border: 2px solid rgba(244, 255, 251, 0.12);
   background: var(--ink-raised);
@@ -504,25 +246,10 @@ html, body {
   transition: border-color 0.15s ease, transform 0.15s ease;
   flex-shrink: 0;
 }
-
 .swatch:hover { transform: translateY(-2px); }
-
-.swatch img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.swatch.empty {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  color: var(--white-dim);
-}
-
-.swatch.active {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px var(--teal-soft);
-}
+.swatch img { width: 100%; height: 100%; object-fit: cover; }
+.swatch.empty { font-family: var(--font-display); font-size: 1.3rem; color: var(--white-dim); }
+.swatch.active { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-soft); }
 
 .swatch-name {
   font-size: 0.65rem;
@@ -546,15 +273,198 @@ html, body {
   padding: 0.6rem 0.9rem;
   margin: 0;
 }
-
 .load-status.visible { display: block; }
-
 .load-status code {
   background: rgba(0, 0, 0, 0.25);
   padding: 0.05rem 0.35rem;
   border-radius: 4px;
   font-size: 0.72rem;
 }
+
+/* -----------------------------------------------------------
+   IDENTITY PAGE (sub-web)
+----------------------------------------------------------- */
+.identity-stage {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem) 1.2rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.identity-card {
+  width: 100%;
+  background: var(--ink-raised);
+  border: 1px solid rgba(45, 218, 192, 0.25);
+  border-radius: var(--radius);
+  padding: 1.6rem;
+}
+
+.identity-avatar-preview {
+  width: 120px; height: 120px;
+  margin: 0 auto 1.2rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(45, 218, 192, 0.35);
+  background: var(--ink);
+}
+.identity-avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.identity-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--teal);
+  text-align: center;
+  margin: 0 0 1.2rem;
+}
+
+.identity-label {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--white-dim);
+  margin: 0.9rem 0 0.4rem;
+}
+
+.identity-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 56px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--white);
+  background: var(--ink);
+  border: 1px solid rgba(244, 255, 251, 0.15);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  transition: border-color 0.15s ease;
+}
+.identity-textarea:focus { outline: none; border-color: var(--teal); }
+.identity-textarea.field-error { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-soft); }
+
+.identity-note { font-size: 0.75rem; color: var(--white-dim); margin: 0.9rem 0 0; line-height: 1.5; }
+.identity-submit { width: 100%; margin-top: 1.2rem; }
+
+/* ---- Animasi magic (loading) ---- */
+.identity-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 3rem 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--white-dim);
+}
+.magic-orb { position: relative; width: 96px; height: 96px; }
+.magic-ring, .magic-core { position: absolute; border-radius: 50%; }
+.magic-ring {
+  inset: 0;
+  border: 2px dashed rgba(45, 218, 192, 0.6);
+  animation: magic-spin 3s linear infinite;
+}
+.magic-ring:nth-child(2) {
+  inset: 16px;
+  border-style: solid;
+  border-color: rgba(45, 218, 192, 0.35);
+  animation: magic-spin 2s linear infinite reverse;
+}
+.magic-core {
+  inset: 34px;
+  background: radial-gradient(circle, var(--teal), var(--teal-deep));
+  box-shadow: 0 0 24px rgba(45, 218, 192, 0.8);
+  animation: magic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes magic-spin { to { transform: rotate(360deg); } }
+@keyframes magic-pulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.identity-error-view {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--white-dim);
+  padding: 2rem 0;
+}
+.identity-error-view p { margin: 0 0 1rem; }
+
+/* ---- Kartu hasil bertema magic ---- */
+.identity-result { width: 100%; }
+.identity-result.card-reveal .ritual-card { animation: card-in 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes card-in {
+  0% { opacity: 0; transform: translateY(24px) scale(0.96); }
+  100% { opacity: 1; transform: none; }
+}
+
+.ritual-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(45, 218, 192, 0.18), transparent 60%),
+    linear-gradient(160deg, var(--ink-raised), var(--black));
+  border: 1px solid rgba(45, 218, 192, 0.4);
+  border-radius: 20px;
+  padding: 1.6rem;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(45, 218, 192, 0.18), 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.ritual-card-glow {
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent, rgba(45, 218, 192, 0.12), transparent 40%);
+  animation: magic-spin 8s linear infinite;
+  pointer-events: none;
+}
+.ritual-card-pfp {
+  position: relative;
+  width: 180px; height: 180px;
+  margin: 0 auto 1.2rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid var(--teal);
+  box-shadow: 0 0 30px rgba(45, 218, 192, 0.5);
+}
+.ritual-card-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.identity-label-small {
+  position: relative;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-dim);
+  margin: 0 0 0.3rem;
+}
+.identity-name {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--teal);
+  margin: 0 0 1rem;
+  line-height: 1.25;
+  text-shadow: 0 0 18px rgba(45, 218, 192, 0.5);
+}
+.identity-desc {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--white);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.identity-result-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
+.identity-result-actions .btn { flex: 1; }
 
 /* -----------------------------------------------------------
    FOOTER
@@ -568,4 +478,10 @@ html, body {
   font-weight: 600;
   font-size: 0.78rem;
   color: var(--white-dim);
+}
+
+/* Hormati preferensi reduce-motion */
+@media (prefers-reduced-motion: reduce) {
+  .magic-ring, .magic-core, .ritual-card-glow,
+  .identity-result.card-reveal .ritual-card { animation: none !important; }
 }
