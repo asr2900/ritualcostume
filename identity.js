@@ -7,6 +7,7 @@
 const avatarImage = sessionStorage.getItem("ritual.avatar");
 const bgSrc = sessionStorage.getItem("ritual.bg") || "";
 
+// Kalau dibuka tanpa membangun avatar dulu, kembalikan ke builder.
 if (!avatarImage) window.location.replace("index.html");
 
 const identityFormView = document.getElementById("identityForm");
