@@ -3,78 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RitualCostume — Ritual Identity</title>
+  <title>RitualCostume — Avatar Lab</title>
   <link rel="icon" href="assets/logo/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="identity-page">
+<body>
   <div class="ritual-bg-noise"></div>
 
   <header class="site-header">
-    <a class="back-link" href="index.html">‹ Back to Lab</a>
+    <div class="logo-frame"><img class="logo-img" src="assets/logo/logo.png" alt="RitualCostume logo" /></div>
     <span class="wordmark">RITUAL <span class="wordmark-thin">COSTUME</span></span>
-    <span class="tagline">ritual identity</span>
+    <span class="tagline">avatar lab</span>
   </header>
 
-  <main class="identity-stage">
-    <!-- FORM -->
-    <section id="identityForm" class="identity-card">
-      <div class="identity-avatar-preview">
-        <img id="identityAvatarPreview" alt="Your avatar" />
+  <main class="lab">
+    <!-- STAGE: preview avatar (kotak) -->
+    <section class="stage">
+      <div class="stage-frame">
+        <canvas id="avatarCanvas" width="600" height="600"></canvas>
       </div>
-      <h1 class="identity-eyebrow">✦ Reveal Your Ritual Identity</h1>
-
-      <label class="identity-label" for="identityQ1">In one sentence, why did you first feel drawn to join the Ritual community?</label>
-      <textarea id="identityQ1" class="identity-textarea"></textarea>
-
-      <label class="identity-label" for="identityQ2">Of everything Ritual is building, what do you believe will change something most?</label>
-      <textarea id="identityQ2" class="identity-textarea"></textarea>
-
-      <p id="identityNote" class="identity-note">Your answers shape a one-of-a-kind identity. There are no wrong answers.</p>
-      <button id="generateIdentityBtn" class="btn btn-primary identity-submit">Generate My Identity</button>
+      <div class="stage-actions">
+        <button id="downloadBtn" class="btn btn-ghost">Download JPG</button>
+        <button id="revealIdentityBtn" class="btn btn-primary" disabled>Reveal My Ritual Identity</button>
+      </div>
+      <p id="revealHint" class="stage-hint">Customize your avatar first to unlock your ritual identity.</p>
     </section>
 
-    <!-- LOADING: animasi magic -->
-    <section id="identityLoading" class="identity-loading" hidden>
-      <div class="magic-orb">
-        <span class="magic-ring"></span>
-        <span class="magic-ring"></span>
-        <span class="magic-core"></span>
+    <!-- CONTROLS -->
+    <section class="controls">
+      <div id="categoryTabs" class="tabs"></div>
+      <div class="swatch-scroll-wrap">
+        <button id="scrollLeftBtn" class="scroll-btn" aria-label="Scroll left">‹</button>
+        <div id="swatchStrip" class="swatch-strip"></div>
+        <button id="scrollRightBtn" class="scroll-btn" aria-label="Scroll right">›</button>
       </div>
-      <p>Forging your ritual identity…</p>
-    </section>
-
-    <!-- ERROR -->
-    <section id="identityErrorView" class="identity-error-view" hidden>
-      <p>The ritual is uncertain right now. Try again in a moment.</p>
-      <button id="identityErrorRetryBtn" class="btn btn-ghost">Try Again</button>
-    </section>
-
-    <!-- RESULT: preview = gambar NFT asli yang akan di-mint -->
-    <section id="identityResult" class="identity-result" hidden>
-      <div class="card-preview-wrap">
-        <div class="ritual-card-glow"></div>
-        <img id="cardPreview" class="card-preview" alt="Your Ritual NFT card" />
-      </div>
-
-      <div id="mintStatus" class="mint-status" hidden></div>
-
-      <div class="identity-result-actions">
-        <button id="mintBtn" class="btn btn-primary">Mint NFT</button>
-        <button id="connectWalletBtn" class="btn btn-primary" hidden>Connect Wallet</button>
-        <button id="shareBtn" class="btn btn-ghost">Share to X</button>
-      </div>
-      <div class="identity-result-actions">
-        <button id="identityCopyBtn" class="btn btn-ghost">Copy Text</button>
-        <button id="startOverBtn" class="btn btn-ghost">Start Over</button>
-      </div>
+      <p id="loadStatus" class="load-status"></p>
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="identity.js"></script>
+  <footer class="site-footer">step by step, build your own character.</footer>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
