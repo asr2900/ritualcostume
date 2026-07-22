@@ -327,6 +327,74 @@ let finalCardImageURL = "";
 const CONTRACT_ABI = [
   "function mintCard(address recipient, string memory tokenURI) public returns (uint256)"
 ];
+const CONTRACT_ADDRESS = "0xBb75b9220038bF1B12093551532cb1A89b93f99";
+
+// Detail jaringan Ritual testnet — dipakai untuk memastikan wallet
+// pengguna terhubung ke chain yang benar sebelum mint. Kalau contract-mu
+// ternyata pindah ke mainnet Ritual nanti, cukup ganti nilai-nilai ini.
+const RITUAL_CHAIN = {
+  chainIdHex: "0x7bb", // 1979 dalam heksadesimal
+  chainName: "Ritual Testnet",
+  nativeCurrency: { name: "RITUAL", symbol: "RITUAL", decimals: 18 },
+  rpcUrls: ["https://rpc.ritualfoundation.org"],
+  blockExplorerUrls: ["https://explorer.ritualfoundation.org"],
+};
+
+// Memastikan wallet pengguna sedang berada di jaringan Ritual testnet.
+// Kalau belum ditambahkan di wallet-nya, otomatis minta menambahkan.
+// Tanpa ini, mintCard() akan gagal karena tidak ada contract di chain
+// yang sedang aktif di wallet pengguna.
+async function ensureRitualNetwork() {
+  const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
+  if (currentChainId === RITUAL_CHAIN.chainIdHex) return;
+
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: RITUAL_CHAIN.chainIdHex }],
+    });
+  } catch (switchError) {
+    // error code 4902 = chain belum pernah ditambahkan ke wallet ini
+    if (switchError.code === 4902) {
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: RITUAL_CHAIN.chainIdHex,
+            chainName: RITUAL_CHAIN.chainName,
+            nativeCurrency: RITUAL_CHAIN.nativeCurrency,
+            rpcUrls: RITUAL_CHAIN.rpcUrls,
+            blockExplorerUrls: RITUAL_CHAIN.blockExplorerUrls,
+          },
+        ],
+      });
+    } else {
+      throw switchError;
+    }
+  }
+}
+
+// Menyiapkan tokenURI yang aman untuk on-chain: upload gambar kartu +
+// metadata ke IPFS lewat backend, lalu kembalikan link ipfs:// yang
+// kecil. JANGAN pernah kirim base64 gambar mentah langsung ke
+// mintCard() — ukurannya bisa ratusan KB dan gas-nya bisa meledak atau
+// transaksinya gagal total.
+async function prepareTokenURI(imageDataUrl, ritualName, ritualIdentity) {
+  const response = await fetch("/api/mint-metadata", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageDataUrl, ritualName, ritualIdentity }),
+  });
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.error || "Failed to prepare NFT metadata");
+  }
+
+  const data = await response.json();
+  if (!data.tokenURI) throw new Error("Metadata endpoint did not return a tokenURI");
+  return data.tokenURI;
+}
 
 function generateRitualCard() {
   if (!identityNameOutput || !identityDescOutput || !canvas) return;
@@ -379,39 +447,50 @@ mintBtn?.addEventListener("click", () => {
 });
 
 connectWalletBtn?.addEventListener("click", async () => {
-  if (typeof window.ethereum !== "undefined") {
-    try {
-      connectWalletBtn.textContent = "Connecting Wallet...";
-      connectWalletBtn.disabled = true;
-
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      const walletAddress = accounts[0];
-      
-      connectWalletBtn.textContent = "Minting NFT...";
-
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-
-      // Alamat dibersihkan menggunakan fungsi getAddress langsung di dalam event klik (aman dari error global scope)
-      const validAddress = ethers.utils.getAddress("0xBb75b9220038bF1B12093551532cb1A89b93f99");
-      const ritualContract = new ethers.Contract(validAddress, CONTRACT_ABI, signer);
-
-      const tokenURI = finalCardImageURL;
-      
-      const tx = await ritualContract.mintCard(walletAddress, tokenURI);
-      await tx.wait();
-
-      alert(`Sukses! NFT RITUAL CARD berhasil dicetak ke dompet Anda:\n${walletAddress}`);
-      connectWalletBtn.textContent = "NFT Minted Successfully!";
-      
-    } catch (error) {
-      console.error("Gagal melakukan proses minting:", error);
-      alert("ERROR DETAIL: " + (error.message || JSON.stringify(error)));
-      connectWalletBtn.textContent = "Connect Wallet";
-      connectWalletBtn.disabled = false;
-    }
-  } else {
+  if (typeof window.ethereum === "undefined") {
     alert("Wallet Web3 tidak terdeteksi. Silakan pasang ekstensi MetaMask.");
+    return;
+  }
+
+  try {
+    connectWalletBtn.textContent = "Connecting Wallet...";
+    connectWalletBtn.disabled = true;
+
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    const walletAddress = accounts[0];
+
+    // Pastikan wallet ada di jaringan Ritual testnet sebelum lanjut,
+    // supaya bukan gagal diam-diam karena salah network.
+    connectWalletBtn.textContent = "Checking network...";
+    await ensureRitualNetwork();
+
+    // Upload gambar + metadata ke IPFS dulu, ambil link kecilnya
+    connectWalletBtn.textContent = "Preparing metadata...";
+    const ritualName = identityNameOutput ? identityNameOutput.textContent : "";
+    const ritualIdentity = identityDescOutput ? identityDescOutput.textContent : "";
+    const tokenURI = await prepareTokenURI(finalCardImageURL, ritualName, ritualIdentity);
+
+    connectWalletBtn.textContent = "Minting NFT...";
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    const validAddress = ethers.utils.getAddress(CONTRACT_ADDRESS);
+    const ritualContract = new ethers.Contract(validAddress, CONTRACT_ABI, signer);
+
+    const tx = await ritualContract.mintCard(walletAddress, tokenURI);
+    await tx.wait();
+
+    alert(`Sukses! NFT RITUAL CARD berhasil dicetak ke dompet Anda:\n${walletAddress}`);
+    connectWalletBtn.textContent = "NFT Minted Successfully!";
+
+  } catch (error) {
+    console.error("Gagal melakukan proses minting:", error);
+    // error.reason (kalau ada) berisi alasan revert asli dari smart
+    // contract — jauh lebih berguna daripada error.message yang generik.
+    const readableMessage =
+      error.reason || error.data?.message || error.message || JSON.stringify(error);
+    alert("ERROR DETAIL: " + readableMessage);
     connectWalletBtn.textContent = "Connect Wallet";
     connectWalletBtn.disabled = false;
   }
